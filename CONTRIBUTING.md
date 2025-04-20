@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 **Example Structure:**
 ```
-submissions-team/
+submissions/team/
 │── your-name/
 │   ├── data-analysis.py
 │   ├── app.py
@@ -78,7 +78,7 @@ submissions-team/
 
 **Example Structure:**
 ```
-submissions-community/
+submissions/community-contributions/
 │── your-name/
 │   ├── data-analysis.py
 │   ├── app.py
