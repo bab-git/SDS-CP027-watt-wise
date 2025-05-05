@@ -8,3 +8,6 @@ venv/
 .venv/
 env/
 ENV/
+
+# copy of data
+local_data/
