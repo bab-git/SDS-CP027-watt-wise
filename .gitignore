@@ -8,6 +8,5 @@ venv/
 .venv/
 env/
 ENV/
-
-# copy of data
-local_data/
+watt_wise_e
+submissions/team/Oluwatunmise-Olaoluwa/requirements.txt
