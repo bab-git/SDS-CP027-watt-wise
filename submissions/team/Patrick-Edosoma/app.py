@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # Load model
-model = joblib.load('sarimax_model.pkl')
+model = joblib.load('submissions/team/Patrick-Edosoma/Sarimax_model.pkl')
 
 st.markdown("### Welcome to the Energy Consumption Forecast App")
 st.sidebar.title("About the App")
@@ -17,9 +17,9 @@ import streamlit as st
 import pandas as pd
 
 # Load the sample CSV from local path
-sample_path = "/Users/sot/SDS-CP027-watt-wise/submissions/team/Patrick-Edosoma/forecast_data.csv"
+sample_path = "submissions/team/Patrick-Edosoma/forecast_data.csv"
 sample_data = pd.read_csv(sample_path)
-st.image("/Users/sot/SDS-CP027-watt-wise/submissions/team/Patrick-Edosoma/POWER.png", caption="Power Demand Prediction")
+st.image("submissions/team/Patrick-Edosoma/POWER.png", caption="Power Demand Prediction")
 
 # Convert to CSV bytes for download
 csv = sample_data.to_csv(index=False).encode('utf-8')
