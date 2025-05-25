@@ -10,11 +10,6 @@ st.sidebar.title("About the App")
 st.sidebar.info(
     "This app forecasts energy consumption based on exogenous variables using a SARIMAX model incorporating temperature and occupancy as exogenous variables. Users can upload their own exogenous data, and the app generates precise consumption forecasts over the specified period. Leveraging time series analysis and external factors, the model captures seasonal patterns and trends to provide reliable energy consumption predictions, supporting better planning and decision-making."
 )
-import streamlit as st
-import pandas as pd
-
-import streamlit as st
-import pandas as pd
 
 # Load the sample CSV from local path
 sample_path = "submissions/team/Patrick-Edosoma/forecast_data.csv"
