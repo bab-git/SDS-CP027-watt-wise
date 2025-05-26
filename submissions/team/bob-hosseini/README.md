@@ -1,6 +1,6 @@
 # 🧠 Watt Wise Submission – SuperDataScience Collaborative Project
 
-Welcome! This folder contains my individual contribution to the **Watt Wise: Intelligent Time Series Energy Consumption Forecasting** project — a collaborative, open-source initiative hosted by the SuperDataScience community.
+Welcome! This folder contains my individual contribution to the **Watt Wise: Intelligent Time Series Energy Consumption Forecasting** project, a collaborative, open-source initiative hosted by the SuperDataScience community.
 
 ---
 
@@ -8,13 +8,9 @@ Welcome! This folder contains my individual contribution to the **Watt Wise: Int
 
 **Watt Wise** is a community-driven time series forecasting project focused on analyzing and predicting building energy usage based on historical consumption patterns and contextual factors like weather, occupancy, HVAC, and lighting.
 
-🔗 Main Project Repository: [Watt Wise on GitHub](https://github.com/SuperDataScience-Community-Projects/SDS-CP027-watt-wise)
-🗓️ Timeline: 5-week collaborative sprint
-🧠 Hosted by: SuperDataScience Community
-
----
-
-Absolutely — here’s an updated and polished version of your **"👤 My Role & Contribution"** section, reflecting your clarified findings, improved modeling, and refined understanding of exogenous feature leakage and forecast-time realism.
+🔗 Main Project Repository: [Watt Wise on GitHub](https://github.com/SuperDataScience-Community-Projects/SDS-CP027-watt-wise)  
+🗓️ Timeline: 5-week collaborative sprint  
+🧠 Hosted by: SuperDataScience Community  
 
 ---
 
