@@ -9,12 +9,13 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 import sys
 import os
-
+import pandas as pd
+from PIL import Image
 
 # Add the parent directory to the Python path to import from src/
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.append(src_path)
-from utils import seasonal_decompose_stl
+from utils import seasonal_decompose_stl, evaluate_model
 
 # This must be FIRST Streamlit command
 st.set_page_config(
@@ -25,6 +26,10 @@ st.set_page_config(
 
 BASE_DIR = os.path.dirname(__file__)  # wherever app.py lives
 
+# Display header image
+header_image = Image.open(os.path.join(BASE_DIR, "..", "image.jpg"))
+st.image(header_image, use_container_width=True)
+
 # -----------------------
 # Load cleaned data
 # -----------------------
@@ -34,10 +39,11 @@ DATA_PATH = os.path.join(BASE_DIR, "..", "data", "data_cleaned.pkl")
 def load_data(path):
     with open(path, 'rb') as f:
         data_cleaned = pickle.load(f)
-    df = data_cleaned['df_data']
+    df_data = data_cleaned['df_data']
+    df_data_history = df_data.iloc[-(48+24):-48]
     df_24h_complete = data_cleaned['df_data_24h_complete']
-    return df, df_24h_complete
-df_data, df_24h_complete = load_data(DATA_PATH)
+    return df_data, df_24h_complete, df_data_history
+df_data, df_24h_complete, df_data_history = load_data(DATA_PATH)
 
 # -----------------------
 # Load modeling data splits
@@ -46,24 +52,57 @@ DATA_SPLIT_PATH = os.path.join(BASE_DIR, "..", "data", "data_split.pkl")
 @st.cache_data
 def load_model_data(path):
     with open(path, 'rb') as f:
-        return pickle.load(f)
+        data_splits = pickle.load(f)
+        # unpack the data splits
+    train_hr = data_splits['train_hr']
+    exog_train = data_splits['exog_train']
+    exog_test = data_splits['exog_test']    
+    return train_hr, exog_train, exog_test
 
-data_splits = load_model_data(DATA_SPLIT_PATH)
+train_hr, exog_train, exog_test = load_model_data(DATA_SPLIT_PATH)
 
 # load model checkpoint
 MODEL_CHECKPOINT_PATH = os.path.join(BASE_DIR, "..", "models", "sarimax_checkpoint.json")
 @st.cache_data
 def load_model_checkpoint(path):
     with open(path, 'r') as f:
-        return json.load(f)
+        checkpoint = json.load(f)
+    # unpack the model checkpoint
+    return (tuple(
+        checkpoint["order"]), 
+        tuple(checkpoint["seasonal_order"]), 
+        checkpoint["params"]
+    )
+order, seasonal_order, params = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
 
-checkpoint = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
+# -----------------------
+# Rebuild & cache the model
+# -----------------------
+@st.cache_resource
+def load_filtered_model(train_data, exog_data, order, seasonal_order, params):
+    model = SARIMAX(train_data, exog=exog_data, order=order, seasonal_order=seasonal_order)
+    return model.filter(params)
+
+fit_model = load_filtered_model(train_hr, exog_train, order, seasonal_order, params)
 
 # -----------------------
 # Streamlit App Layout
 # -----------------------
 # App title
-st.title("🔌 Watt Wise Forecasting App")
+st.title("Watt-Wise: Energy Consumption Forecast")
+st.markdown(
+    """
+    This interactive app is part of the **Watt Wise** project, a collaborative, open-source initiative hosted by the **SuperDataScience** community.  
+    The project focuses on forecasting building energy consumption using historical usage patterns and contextual factors such as weather and occupancy.  
+    This app features a pre-trained **SARIMAX model** that uses simulated future weather inputs to generate short-term energy forecasts.
+    The model is trained on historical data and evaluated on a test set.
+    """,
+    unsafe_allow_html=True
+)
+st.markdown(
+    "[📂 View Source Code on GitHub](https://github.com/bab-git/SDS-CP027-watt-wise/tree/dev_bob/submissions/team/bob-hosseini)",
+    unsafe_allow_html=True
+)
 
 # Tabs
 tab1, tab2 = st.tabs(["📊 Exploratory Data Analysis (EDA)", "📈 Forecasting Energy Consumption"])
@@ -215,41 +254,23 @@ with tab1:
 # -------------------------------
 with tab2:
     st.header("📈 Forecasting Energy Consumption")
-    st.markdown("Select how many hours into the future you want to forecast (up to 48).")
-
-    horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=48, value=24)
-
-    # unpack the data splits
-    train_hr = data_splits['train_hr']
-    exog_train = data_splits['exog_train']
-    exog_test = data_splits['exog_test']
-
-    # unpack the model checkpoint
-    order = tuple(checkpoint["order"])
-    seasonal_order = tuple(checkpoint["seasonal_order"])
-    params = checkpoint["params"]
     st.markdown(f"""
     **SARIMAX Model Configuration:**
 
-    - **Order (p, d, q):** `{checkpoint["order"]}`
-    - **Seasonal Order (P, D, Q, s):** `{checkpoint["seasonal_order"]}`
+    - **Order (p, d, q):** `{order}`
+    - **Seasonal Order (P, D, Q, s):** `{seasonal_order}`
     """)
+    st.markdown("Select how many hours into the future you want to forecast (up to 47).")
 
+    horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=47, value=24)
 
-    # Rebuild model and inject parameters
-    model = SARIMAX(train_hr, exog=exog_train, order=order, seasonal_order=seasonal_order)
-    fit_model = model.filter(params)
-    
     # Subset the exog for the selected forecast horizon
     exog_input = exog_test.iloc[:horizon]
 
     # Perform forecasting
     st.markdown("Generating forecast...")
-    forecast_result = fit_model.get_forecast(steps=horizon, exog=exog_input)
+    forecast_result = fit_model.get_forecast(steps=len(exog_input), exog=exog_input)
     forecast_df = forecast_result.summary_frame()
-
-    # Data history
-    df_data_history = df_data.iloc[-(48+24):-48]
 
     # Rename for consistency
     forecast_df.rename(columns={
@@ -258,9 +279,12 @@ with tab2:
         "mean_ci_upper": "Upper CI"
     }, inplace=True)
 
+
+    df_data_test = df_data.iloc[-48:-(48-horizon)]
+
     fig, ax = plt.subplots(figsize=(10, 4))
     # Plot mean forecast
-    ax.plot(forecast_df.index, forecast_df['Forecast'], label='Forecast', color='orange')
+    ax.plot(forecast_df.index, forecast_df['Forecast'], label='Forecast', color='green', marker='x', linestyle='--')
 
     # Plot confidence interval
     ax.fill_between(forecast_df.index,
@@ -268,12 +292,17 @@ with tab2:
                     forecast_df['Upper CI'],
                     color='orange', alpha=0.3, label='Confidence Interval')
 
-    # Optional: plot historical energy
-    ax.plot(df_data_history.index, df_data_history['EnergyConsumption'], label='Recent History')
+    # plot the actual values
+    ax.plot(df_data_test.index, df_data_test['EnergyConsumption'], label='Test Data', color='orange', marker='o')
+
+    # plot the training data
+    ax.plot(df_data_history.index, df_data_history['EnergyConsumption'], label='Training Data', color='blue', marker='o')
 
     ax.set_title(f"{horizon}-Hour Forecast with Confidence Interval")
     ax.set_xlabel("Time")
     ax.set_ylabel("Energy Consumption")
+    # rotate the x-axis labels
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     ax.legend()
     ax.grid(True)
     st.pyplot(fig)
@@ -282,3 +311,20 @@ with tab2:
     - The confidence interval remains nearly constant across the forecast horizon. This suggests that the SARIMA model does not capture any increasing uncertainty over time, likely because it lacks strong trend or seasonal structure in the target series.
     - Instead, the forecast relies heavily on the exogenous variables provided at prediction time, which are treated by SARIMA model as fixed and fully known, leading to narrow, stable confidence bounds regardless of forecast distance.        
     """)
+
+    df_predictions_sarimax = pd.DataFrame(index=exog_input.index)
+    df_predictions_sarimax['prediction'] = forecast_df['Forecast']
+    df_predictions_sarimax['truth'] = df_data_test['EnergyConsumption'].values
+    metrics =  evaluate_model(df_predictions_sarimax, verbose=True)
+    st.markdown(f"""
+    **Model Evaluation Metrics:**
+    - **MAE:** {metrics['mae']:.2f} kWh
+    - **MAPE:** {metrics['mape']:.2f}%
+    - **RMSE:** {metrics['rmse']:.2f} kWh
+    - **R2:** {metrics['r2']:.2f}
+    """)
+
+    # # show df_predictions_sarimax table
+    # st.dataframe(df_predictions_sarimax)
+    # from sklearn.metrics import r2_score
+    # st.write(r2_score(df_predictions_sarimax['truth'], df_predictions_sarimax['prediction']))
