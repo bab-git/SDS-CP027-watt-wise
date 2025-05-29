@@ -34,10 +34,11 @@ DATA_PATH = os.path.join(BASE_DIR, "..", "data", "data_cleaned.pkl")
 def load_data(path):
     with open(path, 'rb') as f:
         data_cleaned = pickle.load(f)
-    df = data_cleaned['df_data']
+    df_data = data_cleaned['df_data']
+    df_data_history = df_data.iloc[-(48+24):-48]
     df_24h_complete = data_cleaned['df_data_24h_complete']
-    return df, df_24h_complete
-df_data, df_24h_complete = load_data(DATA_PATH)
+    return df_data, df_24h_complete, df_data_history
+df_data, df_24h_complete, df_data_history = load_data(DATA_PATH)
 
 # -----------------------
 # Load modeling data splits
@@ -46,18 +47,44 @@ DATA_SPLIT_PATH = os.path.join(BASE_DIR, "..", "data", "data_split.pkl")
 @st.cache_data
 def load_model_data(path):
     with open(path, 'rb') as f:
-        return pickle.load(f)
+        data_splits = pickle.load(f)
+        # unpack the data splits
+    train_hr = data_splits['train_hr']
+    exog_train = data_splits['exog_train']
+    exog_test = data_splits['exog_test']    
+    return train_hr, exog_train, exog_test
 
-data_splits = load_model_data(DATA_SPLIT_PATH)
+train_hr, exog_train, exog_test = load_model_data(DATA_SPLIT_PATH)
 
 # load model checkpoint
 MODEL_CHECKPOINT_PATH = os.path.join(BASE_DIR, "..", "models", "sarimax_checkpoint.json")
 @st.cache_data
 def load_model_checkpoint(path):
     with open(path, 'r') as f:
-        return json.load(f)
+        checkpoint = json.load(f)
+    # unpack the model checkpoint
+    return (tuple(
+        checkpoint["order"]), 
+        tuple(checkpoint["seasonal_order"]), 
+        checkpoint["params"]
+    )
+order, seasonal_order, params = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
+st.markdown(f"""
+**SARIMAX Model Configuration:**
 
-checkpoint = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
+- **Order (p, d, q):** `{order}`
+- **Seasonal Order (P, D, Q, s):** `{seasonal_order}`
+""")
+
+# -----------------------
+# Rebuild & cache the model
+# -----------------------
+@st.cache_resource
+def load_filtered_model(train_data, exog_data, order, seasonal_order, params):
+    model = SARIMAX(train_data, exog=exog_data, order=order, seasonal_order=seasonal_order)
+    return model.filter(params)
+
+fit_model = load_filtered_model(train_hr, exog_train, order, seasonal_order, params)
 
 # -----------------------
 # Streamlit App Layout
@@ -223,27 +250,6 @@ with tab2:
 
     horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=48, value=24)
 
-    # unpack the data splits
-    train_hr = data_splits['train_hr']
-    exog_train = data_splits['exog_train']
-    exog_test = data_splits['exog_test']
-
-    # unpack the model checkpoint
-    order = tuple(checkpoint["order"])
-    seasonal_order = tuple(checkpoint["seasonal_order"])
-    params = checkpoint["params"]
-    st.markdown(f"""
-    **SARIMAX Model Configuration:**
-
-    - **Order (p, d, q):** `{checkpoint["order"]}`
-    - **Seasonal Order (P, D, Q, s):** `{checkpoint["seasonal_order"]}`
-    """)
-
-
-    # Rebuild model and inject parameters
-    model = SARIMAX(train_hr, exog=exog_train, order=order, seasonal_order=seasonal_order)
-    fit_model = model.filter(params)
-    
     # Subset the exog for the selected forecast horizon
     exog_input = exog_test.iloc[:horizon]
 
@@ -251,9 +257,6 @@ with tab2:
     st.markdown("Generating forecast...")
     forecast_result = fit_model.get_forecast(steps=horizon, exog=exog_input)
     forecast_df = forecast_result.summary_frame()
-
-    # Data history
-    df_data_history = df_data.iloc[-(48+24):-48]
 
     # Rename for consistency
     forecast_df.rename(columns={
