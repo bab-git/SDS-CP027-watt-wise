@@ -44,21 +44,23 @@ As a participant in this collaborative project, I contributed to the following a
 
 ---
 
-### ✅ **Baseline Modeling & ARIMA**
+### ✅ **Baseline Modeling, ARIMA, and SARIMAX**
 
-* Built naive and moving average baselines for 24-hour and 7-day horizons.
-* Performed grid search with proper time-series cross-validation.
-* ARIMA slightly outperformed the baseline but showed **low R²**, indicating high unpredictability in the target.
+* Built naive and moving average baselines for 24-hour and 7-day forecast horizons.
+* Conducted ARIMA grid search using time-series cross-validation.
+* Benchmarked SARIMAX against ARIMA using both real and simulated exogenous inputs.
+* Developed a framework to simulate exogenous variables (e.g., temperature, humidity) using cumulative random walks, enabling realistic multi-step forecasting.
+* Trained SARIMAX using simulated exogenous inputs, achieving R² ≈ 0.33 even with injected uncertainty (σ ≈ 0.04% of target std).
+* Extracted SARIMAX regression coefficients for feature relevance analysis — confirming temperature as the most influential regressor, even under noisy conditions.
 
 ---
 
-### ✅ **Feature Engineering & SARIMAX with Forecast-Time Simulations**
+### ✅ **Forecast App Deployment (Streamlit)**
 
-* Engineered categorical and lag-based features, including rolling stats.
-* Addressed **data leakage** by avoiding use of future exogenous values in forecasting.
-* Developed a framework to **simulate uncertain future values** (e.g. temperature, humidity) using **cumulative random walks**.
-* Fitted SARIMAX using simulated exogenous inputs. Despite noise injection (σ ≈ 0.04% of target std), the model achieved an **R² of 0.33**, showing resilience under uncertainty.
-* Extracted SARIMAX regression coefficients, confirming **temperature** as the most influential exogenous feature under realistic conditions.
+* Developed and deployed a Streamlit web application to interactively forecast building energy usage.
+* Enabled users to select forecast horizon (1–48 hours), run SARIMAX predictions, and visualize actual vs. forecasted trends.
+* Integrated uncertainty handling by using pre-simulated noisy exogenous inputs for robust prediction.
+* Hosted on [Streamlit Community Cloud](https://watt-wise-bob-app.streamlit.app) with preloaded model and data for fast and scalable access.
 
 
 ---
@@ -71,8 +73,18 @@ submissions/team/bob-hosseini/
 ├── notebooks/
 │   ├── 01_EDA_Notebook.ipynb          # Data loading, preprocessing, and time series profiling
 │   ├── 02_Model_Baseline_ARIMA.ipynb  # Baseline forecasts and ARIMA/SARIMAX modeling
+│   ├── 03_Model_Export.ipynb          # Exporting the model and data splits
+│   ├── 04_Model_Evaluation.ipynb      # Evaluating the model
 ├── data/
-│   ├── data.csv                       # Cleaned version of the energy consumption dataset
+│   ├── data.csv                       # Raw energy consumption raw data
+│   ├── data_cleaned.pkl               # Cleaned version of the energy consumption dataset
+│   ├── data_split.pkl                 # Data splits for training and testing
+├── models/
+│   ├── sarimax_checkpoint.json        # Final model checkpoint
+├── app/
+│   ├── app.py                         # Streamlit app
+├── src/
+│   ├── utils.py                       # Utility functions
 ├── README.md                          # This file
 ```
 
@@ -106,22 +118,25 @@ Thanks to the SuperDataScience community and all collaborators, especially those
 
 - Python, pandas, statsmodels
 - SARIMAX (statsmodels)
+- Streamlit (app deployment)
 - Custom random walk simulation
-- Matplotlib/Seaborn for visualizations
+- Matplotlib, Seaborn, Plotly
+
 
 ---
 
-## 🚀 Next Phase: Deployment (Week 5)
+## 🚀 Deployment: Streamlit Web App
 
-### Streamlit App Creation
+The forecasting tool is now live on **Streamlit Community Cloud**:  
+👉 [Try the WattWise Forecasting App](https://watt-wise-bob-app.streamlit.app)
 
-* [ ] Forecast feature: allow selection of next 24h or 7-day window
-* [ ] Interactive dashboard: show historical trends and forecasts
+### App Features
+- Select forecast horizon (1–48 hours)
+- Visualize forecast results vs. historical trends
+- Runs a pre-trained SARIMAX model using simulated exogenous inputs
 
-### Hosting & Documentation
+> Model and data artifacts are preloaded for quick response. Forecast uncertainty is reflected via noise-injected exogenous features.
 
-* [ ] Deploy app on Streamlit Community Cloud (or equivalent)
-* [ ] Add README/user guide for easy onboarding
 
 ---
 
