@@ -14,9 +14,17 @@ import os
 
 
 # Add the parent directory to the Python path to import from src/
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
+file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# st.write(file_path)
+sys.path.append(file_path)
 from utils import seasonal_decompose_stl
 
+# ✅ This must be FIRST Streamlit command
+st.set_page_config(
+    page_title="WattWise",
+    # layout="wide",
+    initial_sidebar_state="auto"
+)
 
 # -----------------------
 # Debugging
@@ -36,32 +44,29 @@ else:
     st.warning("❗ 'data/' folder not found in this directory.")
 
 
-
-# ✅ This must be FIRST Streamlit command
-st.set_page_config(
-    page_title="WattWise",
-    # layout="wide",
-    initial_sidebar_state="auto"
-)
+BASE_DIR = os.path.dirname(__file__)  # wherever app.py lives
+st.write(BASE_DIR)
 
 # -----------------------
 # Load model data
 # -----------------------
+DATA_SPLIT_PATH = os.path.join(BASE_DIR, "..", "data", "data_split.pkl")
 @st.cache_data
-def load_model_data():
-    with open('data/data_split.pkl', 'rb') as f:
+def load_model_data(path):
+    with open(path, 'rb') as f:
         return pickle.load(f)
 
+MODEL_CHECKPOINT_PATH = os.path.join(BASE_DIR, "..", "models", "sarimax_checkpoint.json")
 # load model checkpoint
 @st.cache_data
-def load_model_checkpoint():
-    with open('models/sarimax_checkpoint.json', 'r') as f:
+def load_model_checkpoint(path):
+    with open(path, 'r') as f:
         return json.load(f)
 
 # -----------------------
 # Load cleaned data
 # -----------------------
-DATA_PATH = os.path.join("data", "data_cleaned.pkl")
+DATA_PATH = os.path.join(BASE_DIR, "..", "data", "data_cleaned.pkl")
 
 @st.cache_data
 def load_data(path):
@@ -72,8 +77,8 @@ def load_data(path):
 
 # Load model and data
 df_data, df_24h_complete = load_data(DATA_PATH)
-data_splits = load_model_data()
-checkpoint = load_model_checkpoint()
+data_splits = load_model_data(DATA_SPLIT_PATH)
+checkpoint = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
 
 # -----------------------
 # Streamlit App Layout
