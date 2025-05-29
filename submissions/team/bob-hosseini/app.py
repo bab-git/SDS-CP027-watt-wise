@@ -12,9 +12,30 @@ import joblib
 import sys
 import os
 
+
 # Add the parent directory to the Python path to import from src/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 from utils import seasonal_decompose_stl
+
+
+# -----------------------
+# Debugging
+# -----------------------
+st.markdown("### 🔍 Debug: Current Working Directory")
+cwd = os.getcwd()
+st.write(cwd)
+
+st.markdown("### 📁 Debug: List of Files and Folders in This Directory")
+st.write(os.listdir(cwd))
+
+st.markdown("### 📂 Debug: Contents of 'data/' Folder")
+data_path = os.path.join(cwd, "data")
+if os.path.exists(data_path):
+    st.write(os.listdir(data_path))
+else:
+    st.warning("❗ 'data/' folder not found in this directory.")
+
+
 
 # ✅ This must be FIRST Streamlit command
 st.set_page_config(
