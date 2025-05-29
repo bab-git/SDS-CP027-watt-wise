@@ -1,4 +1,8 @@
 # 🧠 Watt Wise Submission – SuperDataScience Collaborative Project
+[![Streamlit App](https://img.shields.io/badge/Live%20App-Streamlit-brightgreen?logo=streamlit)](https://watt-wise-bob-app.streamlit.app)
+![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
+<!-- ![GitHub stars](https://img.shields.io/github/stars/bab-git/SDS-CP027-watt-wise?style=social) -->
+<!-- ![GitHub forks](https://img.shields.io/github/forks/bab-git/SDS-CP027-watt-wise?style=social) -->
 
 Welcome! This folder contains my individual contribution to the **Watt Wise: Intelligent Time Series Energy Consumption Forecasting** project, a collaborative, open-source initiative hosted by the SuperDataScience community.
 
@@ -136,6 +140,27 @@ The forecasting tool is now live on **Streamlit Community Cloud**:
 - Runs a pre-trained SARIMAX model using simulated exogenous inputs
 
 > Model and data artifacts are preloaded for quick response. Forecast uncertainty is reflected via noise-injected exogenous features.
+
+---
+
+## 📦 How to Run the Streamlit App Locally
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/bab-git/SDS-CP027-watt-wise.git
+cd SDS-CP027-watt-wise/submissions/team/bob-hosseini/
+
+# 2. Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Launch the app
+streamlit run app/app.py
+
+```
 
 
 ---
