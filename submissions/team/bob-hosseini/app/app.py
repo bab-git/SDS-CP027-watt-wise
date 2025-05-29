@@ -64,6 +64,10 @@ checkpoint = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
 # -----------------------
 # App title
 st.title("🔌 Watt Wise Forecasting App")
+st.markdown(
+    "[📂 View Source Code on GitHub](https://github.com/bab-git/SDS-CP027-watt-wise/tree/dev_bob/submissions/team/bob-hosseini)",
+    unsafe_allow_html=True
+)
 
 # Tabs
 tab1, tab2 = st.tabs(["📊 Exploratory Data Analysis (EDA)", "📈 Forecasting Energy Consumption"])
