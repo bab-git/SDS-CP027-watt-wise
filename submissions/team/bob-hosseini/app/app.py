@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import json
 import pickle
 import os
@@ -8,60 +7,23 @@ import plotly.express as px
 import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-import joblib
 import sys
 import os
 
 
 # Add the parent directory to the Python path to import from src/
-file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
-# st.write(file_path)
-sys.path.append(file_path)
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(src_path)
 from utils import seasonal_decompose_stl
 
-# ✅ This must be FIRST Streamlit command
+# This must be FIRST Streamlit command
 st.set_page_config(
     page_title="WattWise",
     # layout="wide",
     initial_sidebar_state="auto"
 )
 
-# -----------------------
-# Debugging
-# -----------------------
-st.markdown("### 🔍 Debug: Current Working Directory")
-cwd = os.getcwd()
-st.write(cwd)
-
-st.markdown("### 📁 Debug: List of Files and Folders in This Directory")
-st.write(os.listdir(cwd))
-
-st.markdown("### 📂 Debug: Contents of 'data/' Folder")
-data_path = os.path.join(cwd, "data")
-if os.path.exists(data_path):
-    st.write(os.listdir(data_path))
-else:
-    st.warning("❗ 'data/' folder not found in this directory.")
-
-
 BASE_DIR = os.path.dirname(__file__)  # wherever app.py lives
-st.write(BASE_DIR)
-
-# -----------------------
-# Load model data
-# -----------------------
-DATA_SPLIT_PATH = os.path.join(BASE_DIR, "..", "data", "data_split.pkl")
-@st.cache_data
-def load_model_data(path):
-    with open(path, 'rb') as f:
-        return pickle.load(f)
-
-MODEL_CHECKPOINT_PATH = os.path.join(BASE_DIR, "..", "models", "sarimax_checkpoint.json")
-# load model checkpoint
-@st.cache_data
-def load_model_checkpoint(path):
-    with open(path, 'r') as f:
-        return json.load(f)
 
 # -----------------------
 # Load cleaned data
@@ -70,14 +32,31 @@ DATA_PATH = os.path.join(BASE_DIR, "..", "data", "data_cleaned.pkl")
 
 @st.cache_data
 def load_data(path):
-    data_cleaned = pickle.load(open(path, 'rb'))
+    with open(path, 'rb') as f:
+        data_cleaned = pickle.load(f)
     df = data_cleaned['df_data']
     df_24h_complete = data_cleaned['df_data_24h_complete']
     return df, df_24h_complete
-
-# Load model and data
 df_data, df_24h_complete = load_data(DATA_PATH)
+
+# -----------------------
+# Load modeling data splits
+# -----------------------
+DATA_SPLIT_PATH = os.path.join(BASE_DIR, "..", "data", "data_split.pkl")
+@st.cache_data
+def load_model_data(path):
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
 data_splits = load_model_data(DATA_SPLIT_PATH)
+
+# load model checkpoint
+MODEL_CHECKPOINT_PATH = os.path.join(BASE_DIR, "..", "models", "sarimax_checkpoint.json")
+@st.cache_data
+def load_model_checkpoint(path):
+    with open(path, 'r') as f:
+        return json.load(f)
+
 checkpoint = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
 
 # -----------------------
