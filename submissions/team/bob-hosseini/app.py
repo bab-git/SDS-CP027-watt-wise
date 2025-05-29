@@ -13,7 +13,7 @@ import sys
 import os
 
 # Add the parent directory to the Python path to import from src/
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 from utils import seasonal_decompose_stl
 
 # ✅ This must be FIRST Streamlit command
@@ -24,30 +24,23 @@ st.set_page_config(
 )
 
 # -----------------------
-# Load model
-# -----------------------
-@st.cache_resource
-def load_model():
-    return joblib.load('../models/sarimax_model.pkl')
-
-# -----------------------
 # Load model data
 # -----------------------
 @st.cache_data
 def load_model_data():
-    with open('../data/data_split.pkl', 'rb') as f:
+    with open('data/data_split.pkl', 'rb') as f:
         return pickle.load(f)
 
 # load model checkpoint
 @st.cache_data
 def load_model_checkpoint():
-    with open('../models/sarimax_checkpoint.json', 'r') as f:
+    with open('models/sarimax_checkpoint.json', 'r') as f:
         return json.load(f)
 
 # -----------------------
 # Load cleaned data
 # -----------------------
-DATA_PATH = os.path.join("..", "data", "data_cleaned.pkl")
+DATA_PATH = os.path.join("data", "data_cleaned.pkl")
 
 @st.cache_data
 def load_data(path):
@@ -58,7 +51,6 @@ def load_data(path):
 
 # Load model and data
 df_data, df_24h_complete = load_data(DATA_PATH)
-fit_model = load_model()
 data_splits = load_model_data()
 checkpoint = load_model_checkpoint()
 
