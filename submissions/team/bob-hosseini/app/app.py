@@ -1,22 +1,20 @@
 import streamlit as st
 import pandas as pd
+import json
 import pickle
 import os
 import matplotlib.pyplot as plt
 import plotly.express as px
 import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+import joblib
 import sys
 import os
 
 # Add the parent directory to the Python path to import from src/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-
 from utils import seasonal_decompose_stl
-
-
-
 
 # ✅ This must be FIRST Streamlit command
 st.set_page_config(
@@ -25,9 +23,29 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
+# -----------------------
+# Load model
+# -----------------------
+@st.cache_resource
+def load_model():
+    return joblib.load('../models/sarimax_model.pkl')
 
 # -----------------------
-# Load your data
+# Load model data
+# -----------------------
+@st.cache_data
+def load_model_data():
+    with open('../data/data_split.pkl', 'rb') as f:
+        return pickle.load(f)
+
+# load model checkpoint
+@st.cache_data
+def load_model_checkpoint():
+    with open('../models/sarimax_checkpoint.json', 'r') as f:
+        return json.load(f)
+
+# -----------------------
+# Load cleaned data
 # -----------------------
 DATA_PATH = os.path.join("..", "data", "data_cleaned.pkl")
 
@@ -38,8 +56,11 @@ def load_data(path):
     df_24h_complete = data_cleaned['df_data_24h_complete']
     return df, df_24h_complete
 
-# Load data
+# Load model and data
 df_data, df_24h_complete = load_data(DATA_PATH)
+fit_model = load_model()
+data_splits = load_model_data()
+checkpoint = load_model_checkpoint()
 
 # -----------------------
 # Streamlit App Layout
@@ -63,8 +84,8 @@ with tab1:
     st.subheader("Descriptive Statistics")
     st.dataframe(df_data.describe())
 
-    # ====================== 24-Hour Rolling Mean of Energy Consumption ======================
-    st.subheader("📈 24-Hour Rolling Mean of Energy Consumption")
+    # ====================== Rolling Mean of Hourly Energy Consumption ======================
+    st.subheader("📈 Rolling Mean of Hourly Energy Consumption")
     st.caption("Use the slider to adjust the size of the rolling window in hours. This smooths short-term fluctuations and helps highlight trends.")
 
     window_size = st.slider("Rolling window size (hours)", 6, 72, 24)
@@ -196,5 +217,71 @@ with tab1:
 # Forecasting TAB
 # -------------------------------
 with tab2:
-    st.subheader("📈 Forecasting")
-    # st.dataframe(df_data.head(100))  # display first 100 rows
+    st.header("📈 Forecasting Energy Consumption")
+    st.markdown("Select how many hours into the future you want to forecast (up to 48).")
+
+    horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=48, value=24)
+
+    # unpack the data splits
+    train_hr = data_splits['train_hr']
+    exog_train = data_splits['exog_train']
+    exog_test = data_splits['exog_test']
+
+    # unpack the model checkpoint
+    order = tuple(checkpoint["order"])
+    seasonal_order = tuple(checkpoint["seasonal_order"])
+    params = checkpoint["params"]
+    st.markdown(f"""
+    **SARIMAX Model Configuration:**
+
+    - **Order (p, d, q):** `{checkpoint["order"]}`
+    - **Seasonal Order (P, D, Q, s):** `{checkpoint["seasonal_order"]}`
+    """)
+
+
+    # Rebuild model and inject parameters
+    model = SARIMAX(train_hr, exog=exog_train, order=order, seasonal_order=seasonal_order)
+    fit_model = model.filter(params)
+    
+    # Subset the exog for the selected forecast horizon
+    exog_input = exog_test.iloc[:horizon]
+
+    # Perform forecasting
+    st.markdown("Generating forecast...")
+    forecast_result = fit_model.get_forecast(steps=horizon, exog=exog_input)
+    forecast_df = forecast_result.summary_frame()
+
+    # Data history
+    df_data_history = df_data.iloc[-(48+24):-48]
+
+    # Rename for consistency
+    forecast_df.rename(columns={
+        "mean": "Forecast",
+        "mean_ci_lower": "Lower CI",
+        "mean_ci_upper": "Upper CI"
+    }, inplace=True)
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+    # Plot mean forecast
+    ax.plot(forecast_df.index, forecast_df['Forecast'], label='Forecast', color='orange')
+
+    # Plot confidence interval
+    ax.fill_between(forecast_df.index,
+                    forecast_df['Lower CI'],
+                    forecast_df['Upper CI'],
+                    color='orange', alpha=0.3, label='Confidence Interval')
+
+    # Optional: plot historical energy
+    ax.plot(df_data_history.index, df_data_history['EnergyConsumption'], label='Recent History')
+
+    ax.set_title(f"{horizon}-Hour Forecast with Confidence Interval")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Energy Consumption")
+    ax.legend()
+    ax.grid(True)
+    st.pyplot(fig)
+
+    st.markdown("""
+    - The confidence interval remains nearly constant across the forecast horizon. This suggests that the SARIMA model does not capture any increasing uncertainty over time, likely because it lacks strong trend or seasonal structure in the target series.
+    - Instead, the forecast relies heavily on the exogenous variables provided at prediction time, which are treated by SARIMA model as fixed and fully known, leading to narrow, stable confidence bounds regardless of forecast distance.        
+    """)
