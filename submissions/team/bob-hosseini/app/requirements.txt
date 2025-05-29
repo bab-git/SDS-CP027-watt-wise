@@ -1,0 +1,10 @@
+ipykernel
+kagglehub
+pandas
+seaborn
+matplotlib
+statsmodels
+scikit-learn
+# pmdarima
+streamlit
+plotly
