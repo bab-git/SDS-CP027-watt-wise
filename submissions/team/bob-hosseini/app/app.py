@@ -69,12 +69,6 @@ def load_model_checkpoint(path):
         checkpoint["params"]
     )
 order, seasonal_order, params = load_model_checkpoint(MODEL_CHECKPOINT_PATH)
-st.markdown(f"""
-**SARIMAX Model Configuration:**
-
-- **Order (p, d, q):** `{order}`
-- **Seasonal Order (P, D, Q, s):** `{seasonal_order}`
-""")
 
 # -----------------------
 # Rebuild & cache the model
@@ -246,6 +240,12 @@ with tab1:
 # -------------------------------
 with tab2:
     st.header("📈 Forecasting Energy Consumption")
+    st.markdown(f"""
+    **SARIMAX Model Configuration:**
+
+    - **Order (p, d, q):** `{order}`
+    - **Seasonal Order (P, D, Q, s):** `{seasonal_order}`
+    """)
     st.markdown("Select how many hours into the future you want to forecast (up to 48).")
 
     horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=48, value=24)
