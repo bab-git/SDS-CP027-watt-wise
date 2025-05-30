@@ -10,6 +10,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 import sys
 import os
 import pandas as pd
+from PIL import Image
 
 # Add the parent directory to the Python path to import from src/
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -24,6 +25,10 @@ st.set_page_config(
 )
 
 BASE_DIR = os.path.dirname(__file__)  # wherever app.py lives
+
+# Display header image
+header_image = Image.open(os.path.join(BASE_DIR, "..", "image.jpg"))
+st.image(header_image, use_container_width=True)
 
 # -----------------------
 # Load cleaned data
@@ -80,24 +85,73 @@ def load_filtered_model(train_data, exog_data, order, seasonal_order, params):
 
 fit_model = load_filtered_model(train_hr, exog_train, order, seasonal_order, params)
 
+# load feature relevance profile
+FEATURE_RELEVANCE_PROFILE_PATH = os.path.join(BASE_DIR, "..", "data", "feature_relevance_profile.pkl")
+@st.cache_data
+def load_feature_relevance_profile(path):
+    with open(path, 'rb') as f:
+        feature_relevance_profile = pickle.load(f)
+    feature_names = feature_relevance_profile['feature_names']
+    feature_coefficients = feature_relevance_profile['feature_coefficients']
+    return feature_names, feature_coefficients
+
+feature_names, feature_coefficients = load_feature_relevance_profile(FEATURE_RELEVANCE_PROFILE_PATH)
+
 # -----------------------
 # Streamlit App Layout
 # -----------------------
 # App title
-st.title("🔌 Watt Wise Forecasting App")
-st.markdown(
-    """
-    This interactive app is part of the **Watt Wise** project, a collaborative, open-source initiative hosted by the **SuperDataScience** community.  
-    The project focuses on forecasting building energy consumption using historical usage patterns and contextual factors such as weather and occupancy.  
-    This app features a pre-trained **SARIMAX model** that uses simulated future weather inputs to generate short-term energy forecasts.
-    The model is trained on historical data and evaluated on a test set.
-    """,
-    unsafe_allow_html=True
-)
-st.markdown(
-    "[📂 View Source Code on GitHub](https://github.com/bab-git/SDS-CP027-watt-wise/tree/dev_bob/submissions/team/bob-hosseini)",
-    unsafe_allow_html=True
-)
+st.title("Watt-Wise: Energy Consumption Forecast")
+with st.sidebar:
+    st.markdown("### ℹ️ Project Overview")
+    st.markdown(
+        """
+        **Watt Wise** is a collaborative, open-source initiative by the **SuperDataScience** community.  
+        The project focuses on forecasting building energy consumption using historical usage patterns and contextual factors such as weather, occupancy, and HVAC activity.
+            
+        > ⚠️ **Note:** This app is based on a **synthetic dataset** created for educational purposes.  
+        > It may not fully reflect real-world building behavior or consumption trends.
+        """
+    )
+
+    st.markdown("### 📊 Model Summary")
+    st.markdown(
+        """
+        This app uses a pre-trained **SARIMAX model** that:
+        - Forecasts energy usage up to 48 hours ahead  
+        - Simulates future exogenous inputs (e.g., temperature) using random walks  
+        - Evaluates performance on a holdout test set
+        """
+    )
+
+    st.markdown("### 🧾 Features Used in the Model")
+    st.markdown(
+        """
+        - **EnergyConsumption**  
+        - **Temperature**  
+        - **Humidity**  
+        - **HVACUsage**  
+        - **Occupancy**  
+        - **LightingUsage**  
+        - **RenewableEnergy**  
+        - **DayOfWeek, Holiday, Month**
+        """
+    )
+
+    st.markdown("### 📁 Dataset Source")
+    st.markdown(
+        """
+        The dataset used for this project is publicly available on Kaggle:  
+        [🔗 Energy Consumption Prediction Dataset](https://www.kaggle.com/datasets/mrsimple07/energy-consumption-prediction)
+        """
+    )
+    
+    st.markdown("### 📂 Source Code")
+    st.markdown(
+        "[🔗 GitHub Repository](https://github.com/bab-git/SDS-CP027-watt-wise/tree/dev_bob/submissions/team/bob-hosseini)",
+        unsafe_allow_html=True
+    )
+
 
 # Tabs
 tab1, tab2 = st.tabs(["📊 Exploratory Data Analysis (EDA)", "📈 Forecasting Energy Consumption"])
@@ -319,7 +373,24 @@ with tab2:
     - **R2:** {metrics['r2']:.2f}
     """)
 
-    # # show df_predictions_sarimax table
-    # st.dataframe(df_predictions_sarimax)
-    # from sklearn.metrics import r2_score
-    # st.write(r2_score(df_predictions_sarimax['truth'], df_predictions_sarimax['prediction']))
+    # -----------------------
+    # Feature Relevance (SARIMAX Coefficients)
+    # -----------------------
+    st.subheader("Feature Relevance (SARIMAX Coefficients)")
+
+    # plot feature_coefficients and feature_names as horizontal bar chart
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.barh(feature_names, feature_coefficients)
+    ax.set_title("Normalized SARIMAX Exogenous Feature Coefficients")
+    ax.set_xlabel("Relative Importance")
+    ax.invert_yaxis()
+    ax.grid(True)
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    - **Temperature** has the highest coefficient magnitude among the exogenous variables, indicating the strongest influence on the model’s forecasts.
+    - Other features like **HVAC usage**, **occupancy**, **lighting usage**, and **renewable energy** also show meaningful contributions to the prediction.
+    - Categorical features such as **day of week**, **holiday flag**, and **square footage** have relatively lower coefficients, suggesting less direct impact on short-term forecast variance.
+    """)
+

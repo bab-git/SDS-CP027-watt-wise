@@ -17,6 +17,33 @@ Welcome! This folder contains my individual contribution to the **Watt Wise: Int
 🧠 Hosted by: SuperDataScience Community  
 
 ---
+    
+## 📈 Dataset Information
+
+This project uses a **synthetic dataset** designed for educational and experimental purposes. While it includes realistic patterns and contextual variables, it may not fully reflect real-world building energy usage behavior or distributional properties.
+
+* 📁 **Dataset Source**: [Energy Consumption Prediction on Kaggle](https://www.kaggle.com/datasets/mrsimple07/energy-consumption-prediction)
+* 📌 **License**: Publicly shared for non-commercial use (verify on Kaggle)
+* ⚠️ **Disclaimer**: Forecasting results and feature influences observed in this project may not generalize to operational energy management systems due to the synthetic nature of the data.
+
+### 🧾 Feature Overview
+
+| Feature Name           | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| `Temperature`          | Hourly ambient temperature                       |
+| `Humidity`             | Hourly humidity percentage                       |
+| `SquareFootage`        | Size of the building (static contextual feature) |
+| `Occupancy`            | Simulated number of occupants                    |
+| `HVACUsage`            | Binary flag indicating HVAC system usage         |
+| `LightingUsage`        | Binary flag indicating lighting system activity  |
+| `RenewableEnergy`      | Amount of energy produced by on-site renewables  |
+| `DayOfWeek`, `Holiday` | Categorical calendar context                     |
+| `EnergyConsumption`    | Target variable: hourly energy usage (kWh)       |
+
+Additional time-based and lagged features were derived during preprocessing for modeling purposes (e.g., `Temperature_lag1`, `HVACUsage_rol`, etc.).
+
+---
+
 
 ## 👤 My Role & Contribution
 
