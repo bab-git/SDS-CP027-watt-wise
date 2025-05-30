@@ -9,12 +9,12 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 import sys
 import os
-
+import pandas as pd
 
 # Add the parent directory to the Python path to import from src/
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.append(src_path)
-from utils import seasonal_decompose_stl
+from utils import seasonal_decompose_stl, evaluate_model
 
 # This must be FIRST Streamlit command
 st.set_page_config(
@@ -85,6 +85,15 @@ fit_model = load_filtered_model(train_hr, exog_train, order, seasonal_order, par
 # -----------------------
 # App title
 st.title("🔌 Watt Wise Forecasting App")
+st.markdown(
+    """
+    This interactive app is part of the **Watt Wise** project, a collaborative, open-source initiative hosted by the **SuperDataScience** community.  
+    The project focuses on forecasting building energy consumption using historical usage patterns and contextual factors such as weather and occupancy.  
+    This app features a pre-trained **SARIMAX model** that uses simulated future weather inputs to generate short-term energy forecasts.
+    The model is trained on historical data and evaluated on a test set.
+    """,
+    unsafe_allow_html=True
+)
 st.markdown(
     "[📂 View Source Code on GitHub](https://github.com/bab-git/SDS-CP027-watt-wise/tree/dev_bob/submissions/team/bob-hosseini)",
     unsafe_allow_html=True
@@ -246,16 +255,16 @@ with tab2:
     - **Order (p, d, q):** `{order}`
     - **Seasonal Order (P, D, Q, s):** `{seasonal_order}`
     """)
-    st.markdown("Select how many hours into the future you want to forecast (up to 48).")
+    st.markdown("Select how many hours into the future you want to forecast (up to 47).")
 
-    horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=48, value=24)
+    horizon = st.slider("Forecast Horizon (hours)", min_value=1, max_value=47, value=24)
 
     # Subset the exog for the selected forecast horizon
     exog_input = exog_test.iloc[:horizon]
 
     # Perform forecasting
     st.markdown("Generating forecast...")
-    forecast_result = fit_model.get_forecast(steps=horizon, exog=exog_input)
+    forecast_result = fit_model.get_forecast(steps=len(exog_input), exog=exog_input)
     forecast_df = forecast_result.summary_frame()
 
     # Rename for consistency
@@ -265,9 +274,12 @@ with tab2:
         "mean_ci_upper": "Upper CI"
     }, inplace=True)
 
+
+    df_data_test = df_data.iloc[-48:-(48-horizon)]
+
     fig, ax = plt.subplots(figsize=(10, 4))
     # Plot mean forecast
-    ax.plot(forecast_df.index, forecast_df['Forecast'], label='Forecast', color='orange')
+    ax.plot(forecast_df.index, forecast_df['Forecast'], label='Forecast', color='green', marker='x', linestyle='--')
 
     # Plot confidence interval
     ax.fill_between(forecast_df.index,
@@ -275,12 +287,17 @@ with tab2:
                     forecast_df['Upper CI'],
                     color='orange', alpha=0.3, label='Confidence Interval')
 
-    # Optional: plot historical energy
-    ax.plot(df_data_history.index, df_data_history['EnergyConsumption'], label='Recent History')
+    # plot the actual values
+    ax.plot(df_data_test.index, df_data_test['EnergyConsumption'], label='Test Data', color='orange', marker='o')
+
+    # plot the training data
+    ax.plot(df_data_history.index, df_data_history['EnergyConsumption'], label='Training Data', color='blue', marker='o')
 
     ax.set_title(f"{horizon}-Hour Forecast with Confidence Interval")
     ax.set_xlabel("Time")
     ax.set_ylabel("Energy Consumption")
+    # rotate the x-axis labels
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     ax.legend()
     ax.grid(True)
     st.pyplot(fig)
@@ -289,3 +306,20 @@ with tab2:
     - The confidence interval remains nearly constant across the forecast horizon. This suggests that the SARIMA model does not capture any increasing uncertainty over time, likely because it lacks strong trend or seasonal structure in the target series.
     - Instead, the forecast relies heavily on the exogenous variables provided at prediction time, which are treated by SARIMA model as fixed and fully known, leading to narrow, stable confidence bounds regardless of forecast distance.        
     """)
+
+    df_predictions_sarimax = pd.DataFrame(index=exog_input.index)
+    df_predictions_sarimax['prediction'] = forecast_df['Forecast']
+    df_predictions_sarimax['truth'] = df_data_test['EnergyConsumption'].values
+    metrics =  evaluate_model(df_predictions_sarimax, verbose=True)
+    st.markdown(f"""
+    **Model Evaluation Metrics:**
+    - **MAE:** {metrics['mae']:.2f} kWh
+    - **MAPE:** {metrics['mape']:.2f}%
+    - **RMSE:** {metrics['rmse']:.2f} kWh
+    - **R2:** {metrics['r2']:.2f}
+    """)
+
+    # # show df_predictions_sarimax table
+    # st.dataframe(df_predictions_sarimax)
+    # from sklearn.metrics import r2_score
+    # st.write(r2_score(df_predictions_sarimax['truth'], df_predictions_sarimax['prediction']))

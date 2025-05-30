@@ -78,7 +78,6 @@ submissions/team/bob-hosseini/
 │   ├── 01_EDA_Notebook.ipynb          # Data loading, preprocessing, and time series profiling
 │   ├── 02_Model_Baseline_ARIMA.ipynb  # Baseline forecasts and ARIMA/SARIMAX modeling
 │   ├── 03_Model_Export.ipynb          # Exporting the model and data splits
-│   ├── 04_Model_Evaluation.ipynb      # Evaluating the model
 ├── data/
 │   ├── data.csv                       # Raw energy consumption raw data
 │   ├── data_cleaned.pkl               # Cleaned version of the energy consumption dataset
