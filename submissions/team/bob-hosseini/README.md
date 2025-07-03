@@ -1,8 +1,10 @@
 # 🧠 Watt Wise Submission – SuperDataScience Collaborative Project
-[![Streamlit App](https://img.shields.io/badge/Live%20App-Streamlit-brightgreen?logo=streamlit)](https://watt-wise-bob-app.streamlit.app)
+[![Modal App](https://img.shields.io/badge/Live%20App-Modal-FF6B6B?logo=modal)](https://bbkhosseini--wattwise-energy-forecast-run.modal.run)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
-<!-- ![GitHub stars](https://img.shields.io/github/stars/bab-git/SDS-CP027-watt-wise?style=social) -->
-<!-- ![GitHub forks](https://img.shields.io/github/forks/bab-git/SDS-CP027-watt-wise?style=social) -->
+![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit)
+![SARIMAX](https://img.shields.io/badge/Model-SARIMAX-purple)
+![Time Series](https://img.shields.io/badge/ML-Time%20Series-orange)
+![Energy Forecasting](https://img.shields.io/badge/Domain-Energy%20Forecasting-green)
 
 Welcome! This folder contains my individual contribution to the **Watt Wise: Intelligent Time Series Energy Consumption Forecasting** project, a collaborative, open-source initiative hosted by the SuperDataScience community.
 
@@ -86,12 +88,13 @@ As a participant in this collaborative project, I contributed to the following a
 
 ---
 
-### ✅ **Forecast App Deployment (Streamlit)**
+### ✅ **Forecast App Deployment (Streamlit & Modal)**
 
 * Developed and deployed a Streamlit web application to interactively forecast building energy usage.
 * Enabled users to select forecast horizon (1–48 hours), run SARIMAX predictions, and visualize actual vs. forecasted trends.
 * Integrated uncertainty handling by using pre-simulated noisy exogenous inputs for robust prediction.
-* Hosted on [Streamlit Community Cloud](https://watt-wise-bob-app.streamlit.app) with preloaded model and data for fast and scalable access.
+* Deployed the app on Modal Cloud for scalability and performance.
+
 
 
 ---
@@ -113,87 +116,53 @@ submissions/team/bob-hosseini/
 │   ├── sarimax_checkpoint.json        # Final model checkpoint
 ├── app/
 │   ├── app.py                         # Streamlit app
+├── modal/
+│   ├── modal_app.py                   # Modal deployment configuration
+│   ├── modal_streamlit.py             # Streamlit app adapted for Modal
+│   └── README.md                      # Modal deployment guide
 ├── src/
 │   ├── utils.py                       # Utility functions
 ├── README.md                          # This file
 ```
-
-> *Note: Notebooks are self-contained and annotated for educational clarity.*
-
----
-
-## 📊 Summary & Learnings
-
-* **Exogenous Leakage Is Critical**: Using future values of variables like temperature leads to **data leakage** and overly optimistic performance. These values must be simulated or excluded in real forecasting.
-
-* **Target Series is Largely Unpredictable**: Energy consumption behaves like **white noise**, showing minimal autocorrelation or predictable structure over time.
-
-* **Lagged Exogenous Features Had Little Impact**: When using only past values of exogenous variables, **SARIMAX performance did not improve** over ARIMA — confirming weak predictive influence.
-
-* **Realistic Forecasting with Simulated Inputs**: Injecting **random walk noise** into exogenous inputs allowed SARIMAX to simulate realistic forecast conditions and still achieve **R² ≈ 0.33**.
-
-* **Feature Relevance via SARIMAX Coefficients**: Among all simulated features, **temperature consistently emerged as the most influential**, even under uncertainty.
-
-* **Time-Series Cross-Validation Matters**: Integrating CV into the model selection pipeline ensured **reliable performance estimates** and prevented overfitting to a single test split.
-
----
-
-## 🙌 Acknowledgments
-
-Thanks to the SuperDataScience community and all collaborators, especially those who contributed to the project's discussions and shared their insights.  
-
----
 
 ## 🛠️ Tools Used
 
 - Python, pandas, statsmodels
 - SARIMAX (statsmodels)
 - Streamlit (app deployment)
+- Modal (cloud deployment & scaling)
 - Custom random walk simulation
 - Matplotlib, Seaborn, Plotly
 
 
----
+## 🚀 Deployment: 
 
-## 🚀 Deployment: Streamlit Web App
+The forecasting tool is available on Modal Cloud:
 
-The forecasting tool is now live on **Streamlit Community Cloud**:  
-👉 [Try the WattWise Forecasting App](https://watt-wise-bob-app.streamlit.app)
+👉 [Try the WattWise App on Modal](https://bbkhosseini--wattwise-energy-forecast-run.modal.run)
 
 ### App Features
 - Select forecast horizon (1–48 hours)
 - Visualize forecast results vs. historical trends
 - Runs a pre-trained SARIMAX model using simulated exogenous inputs
+- **Modal version**: Supports up to 100 concurrent users with enhanced performance
 
 > Model and data artifacts are preloaded for quick response. Forecast uncertainty is reflected via noise-injected exogenous features.
 
----
+## 🌩️ Deploy to Modal Cloud
 
-## 📦 How to Run the Streamlit App Locally
+For scalable cloud deployment with support for concurrent users:
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/bab-git/SDS-CP027-watt-wise.git
-cd SDS-CP027-watt-wise/submissions/team/bob-hosseini/
+# 1. Install Modal CLI
+pip install modal
 
-# 2. Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+# 2. Set up Modal authentication
+modal setup
 
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Launch the app
-streamlit run app/app.py
-
+# 3. Deploy to Modal
+cd modal/
+modal deploy modal_app.py
 ```
 
-
----
-
-## 📧 Contact / Connect
-
-Feel free to reach out or follow me for more data science projects:
-
-* [Bob Hosseini's Github Portfolio](https://github.com/bab-git)
-* [LinkedIn](https://www.linkedin.com/in/bhosseini/)
+See the [Modal deployment guide](modal/README.md) for detailed instructions.
