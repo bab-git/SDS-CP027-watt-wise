@@ -7,6 +7,10 @@
 
 def main():
     import streamlit as st
+
+    loading_placeholder = st.empty()
+    loading_placeholder.info("🚀 Loading WattWise... Please wait.")
+    
     import json
     import pickle
     # import os
@@ -22,6 +26,7 @@ def main():
     # Add the src directory to the Python path
     sys.path.append('/root/src')
     from utils import seasonal_decompose_stl, evaluate_model
+    loading_placeholder.empty()
 
     # This must be FIRST Streamlit command
     st.set_page_config(
